@@ -9,6 +9,7 @@ import time
 import math
 import win32gui, win32ui, win32con, win32api
 import requests
+import pyautogui
 
 try:
     import cv2
