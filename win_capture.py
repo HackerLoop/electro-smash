@@ -121,20 +121,20 @@ def matchTemplate(template, percent):
         P1p = p1Percent
         print(P1p,P2p)
         try:
-            print("ok")
             #requests.post("http://localhost:3000/degats", json={'j1': P1p, 'j2': P2p})
             #requests.post("http://localhost:3000/degats", json={'pulse': 1, 'lvl': round(P1p/100)}, timeout=1.5)
             requests.post("http://192.168.43.47", json={'pulse': 1, 'lvl': round(P1p/100)}, timeout=1.5)
+            print("ok")
         except:
             print("fail !!")
     if p2Percent > P2p and (p2Percent - P2p < 100):
         P2p = p2Percent
         print(P1p,P2p)
         try:
-            print("ok")
             #requests.post("http://localhost:3000/degats", json={'j1': P1p, 'j2': P2p}, timeout=1.5)
             #requests.post("http://localhost:3000/degats", json={'pulse': 2, 'lvl': round(P2p/100)}, timeout=1.5)
             requests.post("http://192.168.43.47", json={'pulse': 2, 'lvl': round(P2p/100)}, timeout=1.5)
+            print("ok")
         except:
             print("fail !!")
     return percent
