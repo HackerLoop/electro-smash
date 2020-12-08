@@ -17,5 +17,8 @@ First you need to setup obs:
 ## Run Python Script
 `npm start` or `python win_capture.py`
 
+## Use with electro Relay
+Make sur to match ip in the `requests.post` at the end of the `matchTemplate` function to the ip of the device.
+
 ## Run test server
 `npm run serve`
