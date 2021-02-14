@@ -122,23 +122,24 @@ def main():
             break
     cv2.destroyAllWindows()
 
-# max_callibration = None
+def get_prop(rgb_img, show=False):
+    img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2HLS)[:, :, 0]  # hue only
 
-def get_prop(rgb_img):
-    img = rgb_img[:,:,1]
-    # img = cv2.GaussianBlur(img, (3,3), 1)
     N = 3
     img = np.average(img, axis=0)
-    img = np.convolve(img, np.ones(N)/N, mode='valid')
+    img = np.convolve(img, np.ones(N) / N, mode="valid")
 
-    global max_callibration
-    if max_callibration is None:
-        max_callibration = img.max()
-    #normalize
-    img = (img - img.min())/(max_callibration - img.min())
+    if show:
+        cv2.imshow("percent", np.tile(img, (5, 1)).astype(np.uint8))
+        if cv2.waitKey(10 * 10) & 0xFF == ord("q"):
+            win.stop()
 
-    results = np.where(np.gradient(img) > .1)[0]
-    return (1 - np.where(np.gradient(img) > .1)[0][0] / img.size)
+    center = 60  # 60° = yellow
+    margin = 15
+    results = np.where((img > (center - margin) / 2) & (img < (center + margin) / 2))[0]
+    if results.size == 0:
+        return 0
+    return 1 - results[0] / img.size
 
 # def main():
 #     img = cv2.imread('test.png')
