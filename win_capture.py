@@ -17,8 +17,6 @@ except ImportError:
     sys.stderr.write("requires opencv-python")
     raise
 
-threshold = [0.75,0.55,0.7,0.7,0.7,0.75,0.75,0.7,0.78,0.7]
-
 P1p = 0
 P2p = 0
 
@@ -64,60 +62,20 @@ class winCapture:
         w = self.inner_w
         h = self.inner_h #- chromeUrlBar
         img = img[y:y+h, x:x+w]
+        rectangle = np.array([[253, 124], [890, 143]])
         return (img,
-        img[int(h*0.85):int(h*0.922), int(w*0.26):int(w*0.353 )],
-        img[int(h*0.85):int(h*0.922), int(w*0.644+correction_obs):int(w*0.737+correction_obs)])
+        img[rectangle[0][1]:rectangle[1][1], rectangle[0][0]:rectangle[1][0]],
+        img[:,::-1][rectangle[0][1]:rectangle[1][1], rectangle[0][0]:rectangle[1][0]])
 
     def stop(self):
         self.mfcDC.DeleteDC()
         self.saveDC.DeleteDC()
         win32gui.ReleaseDC(self.hwnd, self.hwndDC)
 
-def convertBW(input):
-    frame = input.copy()
-    frame[:, :, 1] = 0
-    frame[:, :, 0] = 0
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    frame = cv2.threshold(frame, 128, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-    return frame
-
-def matchTemplate(template, percent):
-    # print(type(percent))
-    percent = cv2.resize(percent, (200, 44), interpolation=cv2.INTER_CUBIC)
-    tw, th = template[0].shape[::-1]
-    fw = percent.shape[::-1][0]
-    global P1p
-    global P2p
-    p1Percent = 0
-    p2Percent = 0
-    mask = np.zeros(percent.shape[:2], np.uint8)
-    for tempNum in [9,8,7,6,5,4,3,2,1,0]:
-        res = cv2.matchTemplate(percent,template[tempNum],cv2.TM_CCOEFF_NORMED)
-        loc = np.where( res >= threshold[tempNum])
-        for pt in zip(*loc[::-1]):
-            if mask[int(pt[1] + th/2), int(pt[0] + tw/2)] != 255:
-                mask[pt[1]:pt[1]+th, pt[0]:pt[0]+tw] = 255
-                if pt[0] > 0.7*fw:
-                    if (tempNum == 0) and (p2Percent ==0) and (P2p!=0):
-                        P2p = 0
-                        print(P1p,P2p)
-                    p2Percent += tempNum
-                elif pt[0] > 0.6*fw:
-                    p2Percent += tempNum*10
-                elif pt[0] > 0.5*fw:
-                    p2Percent += tempNum*100
-                elif pt[0] > 0.25*fw:
-                    if (tempNum == 0) and (p1Percent ==0) and (P1p!=0):
-                        P1p = 0
-                        print(P1p,P2p)
-                    p1Percent += tempNum
-                elif pt[0] > 0.1*fw:
-                    p1Percent += tempNum*10
-                elif pt[0] > 0:
-                    p1Percent += tempNum*100
-    # print("test1", p1Percent)
-    # print("test2", p2Percent)
-    if p1Percent > P1p and (p1Percent - P1p < 100):
+def matchTemplate(percents):
+    global P1p, P2p
+    p1Percent, p2Percent = percents
+    if p1Percent < P1p:
         P1p = p1Percent
         print(P1p,P2p)
         try:
@@ -127,7 +85,7 @@ def matchTemplate(template, percent):
             print("ok")
         except:
             print("fail !!")
-    if p2Percent > P2p and (p2Percent - P2p < 100):
+    if p2Percent < P2p:
         P2p = p2Percent
         print(P1p,P2p)
         try:
@@ -137,7 +95,6 @@ def matchTemplate(template, percent):
             print("ok")
         except:
             print("fail !!")
-    return percent
 
 def main():
     win = winCapture()
@@ -151,8 +108,8 @@ def main():
         try:
             (frame,frame_1p,frame_2p) = win.getframe()
             frame_p = np.concatenate((frame_1p, frame_2p), axis=1)
-            percent = convertBW(frame_p)
-            matchTemplate(template, percent)
+            percents = get_prop(frame_1p), get_prop(frame_2p)
+            matchTemplate(percents)
             #cv2.imshow('frame', frame)
 
             frame_p = cv2.resize(frame_p, (0,0), fx=3, fy=3)
@@ -164,6 +121,37 @@ def main():
             win.stop()
             break
     cv2.destroyAllWindows()
+
+# max_callibration = None
+
+def get_prop(rgb_img):
+    img = rgb_img[:,:,1]
+    # img = cv2.GaussianBlur(img, (3,3), 1)
+    N = 3
+    img = np.average(img, axis=0)
+    img = np.convolve(img, np.ones(N)/N, mode='valid')
+
+    global max_callibration
+    if max_callibration is None:
+        max_callibration = img.max()
+    #normalize
+    img = (img - img.min())/(max_callibration - img.min())
+
+    results = np.where(np.gradient(img) > .1)[0]
+    return (1 - np.where(np.gradient(img) > .1)[0][0] / img.size)
+
+# def main():
+#     img = cv2.imread('test.png')
+#     rectangle = np.array([[205, 126], [884, 146]])
+#     img_left = img[rectangle[0][1]:rectangle[1][1], rectangle[0][0]:rectangle[1][0]]
+#     left = get_prop(img_left)
+
+#     img = img[:,::-1]
+#     img_right = img[rectangle[0][1]:rectangle[1][1], rectangle[0][0]:rectangle[1][0]]
+#     right = get_prop(img_right)
+
+#     print(left * 100, '%', right * 100, '%')
+
 
 if __name__ == "__main__":
     time.sleep(2)
