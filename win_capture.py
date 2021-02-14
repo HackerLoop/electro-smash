@@ -17,8 +17,8 @@ except ImportError:
     sys.stderr.write("requires opencv-python")
     raise
 
-P1p = 0
-P2p = 0
+P1p = 1
+P2p = 1
 
 class winCapture:
     def __init__(self):
@@ -81,7 +81,7 @@ def matchTemplate(percents):
         try:
             #requests.post("http://localhost:3000/degats", json={'j1': P1p, 'j2': P2p})
             #requests.post("http://localhost:3000/degats", json={'pulse': 1, 'lvl': round(P1p/100)}, timeout=1.5)
-            requests.post("http://192.168.43.47", json={'pulse': 1, 'lvl': round(P1p/100)}, timeout=1.5)
+            requests.post("http://192.168.43.47", json={'pulse': 1, 'lvl': round((1 - P1p) * 5)}, timeout=1.5)
             print("ok")
         except:
             print("fail !!")
@@ -91,7 +91,7 @@ def matchTemplate(percents):
         try:
             #requests.post("http://localhost:3000/degats", json={'j1': P1p, 'j2': P2p}, timeout=1.5)
             #requests.post("http://localhost:3000/degats", json={'pulse': 2, 'lvl': round(P2p/100)}, timeout=1.5)
-            requests.post("http://192.168.43.47", json={'pulse': 2, 'lvl': round(P2p/100)}, timeout=1.5)
+            requests.post("http://192.168.43.47", json={'pulse': 2, 'lvl': round((1 - P2p) * 5)}, timeout=1.5)
             print("ok")
         except:
             print("fail !!")
@@ -99,11 +99,8 @@ def matchTemplate(percents):
 def main():
     win = winCapture()
     win.getSize()
-    fps = 30
+    fps = 50
     frame_time = int((1.0 / fps) * 1000.0)
-    template = []
-    for num in range(10):
-        template.append(cv2.imread('./template/'+str(num)+'.png',0))
     while True:
         try:
             (frame,frame_1p,frame_2p) = win.getframe()
@@ -112,7 +109,6 @@ def main():
             matchTemplate(percents)
             #cv2.imshow('frame', frame)
 
-            frame_p = cv2.resize(frame_p, (0,0), fx=3, fy=3)
             cv2.imshow('percent', frame_p)
             if cv2.waitKey(frame_time*10) & 0xFF == ord('q'):
                 win.stop()
@@ -122,7 +118,7 @@ def main():
             break
     cv2.destroyAllWindows()
 
-def get_prop(rgb_img, show=False):
+def get_prop(bgr_img, show=False):
     img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2HLS)[:, :, 0]  # hue only
 
     N = 3
