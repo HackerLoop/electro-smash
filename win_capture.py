@@ -141,18 +141,6 @@ def get_prop(rgb_img, show=False):
         return 0
     return 1 - results[0] / img.size
 
-# def main():
-#     img = cv2.imread('test.png')
-#     rectangle = np.array([[205, 126], [884, 146]])
-#     img_left = img[rectangle[0][1]:rectangle[1][1], rectangle[0][0]:rectangle[1][0]]
-#     left = get_prop(img_left)
-
-#     img = img[:,::-1]
-#     img_right = img[rectangle[0][1]:rectangle[1][1], rectangle[0][0]:rectangle[1][0]]
-#     right = get_prop(img_right)
-
-#     print(left * 100, '%', right * 100, '%')
-
 
 if __name__ == "__main__":
     time.sleep(2)
